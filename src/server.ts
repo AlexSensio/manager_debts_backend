@@ -5,7 +5,7 @@ import connectDB from './config/database';
 const PORT = process.env.PORT || 3000;
 
 const start = async (): Promise<void> => {
-  connectDB().catch((error) => {
+  await connectDB().catch((error) => {
     console.error('❌ Erro ao conectar ao banco de dados:', error);
     process.exit(1);
   });
