@@ -23,7 +23,9 @@ interface CreateDebtData {
   totalAmount: number;
   installmentsCount: number;
   interestRate: number;
+  dailyInterestRate?: number;
   startDate?: string;
+  endDate?: string;
 }
 
 export const createDebtService = async (
@@ -41,6 +43,7 @@ export const createDebtService = async (
   const totalWithInterest = parseFloat((installmentAmount * data.installmentsCount).toFixed(2));
 
   const startDate = data.startDate ? new Date(data.startDate) : new Date();
+  const endDate = data.endDate ? new Date(data.endDate) : undefined;
 
   const debt = await Debt.create({
     userId,
@@ -49,9 +52,11 @@ export const createDebtService = async (
     totalAmount: data.totalAmount,
     installmentsCount: data.installmentsCount,
     interestRate: data.interestRate,
+    dailyInterestRate: data.dailyInterestRate ?? 0,
     installmentAmount,
     totalWithInterest,
     startDate,
+    endDate,
     status: 'active',
   });
 
@@ -109,7 +114,7 @@ export const getDebtsByPersonService = async (
 export const updateDebtService = async (
   userId: string,
   debtId: string,
-  data: Partial<{ description: string; status: string }>
+  data: Partial<{ description: string; status: string; endDate: string; dailyInterestRate: number }>
 ): Promise<IDebt> => {
   if (!mongoose.Types.ObjectId.isValid(debtId)) throw createError('ID inválido.', 400);
 

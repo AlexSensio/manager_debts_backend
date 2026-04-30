@@ -51,6 +51,43 @@ export const getGlobalDashboardService = async (userId: string) => {
   const totalReceived = totalReceivedAgg[0]?.total || 0;
   const totalInterest = totalInterestAgg[0]?.total || 0;
 
+  // Juros diários acumulados de parcelas pendentes vencidas
+  const today = new Date();
+  const accruedInterestAgg = await Installment.aggregate([
+    { $match: { userId: userObjId, status: 'pending', dueDate: { $lt: today } } },
+    {
+      $lookup: {
+        from: 'debts',
+        localField: 'debtId',
+        foreignField: '_id',
+        as: 'debt',
+      },
+    },
+    { $unwind: '$debt' },
+    {
+      $project: {
+        accruedInterest: {
+          $multiply: [
+            '$amount',
+            { $divide: [{ $ifNull: ['$debt.dailyInterestRate', 0] }, 100] },
+            {
+              $floor: {
+                $divide: [
+                  { $subtract: [today, '$dueDate'] },
+                  1000 * 60 * 60 * 24,
+                ],
+              },
+            },
+          ],
+        },
+      },
+    },
+    { $group: { _id: null, total: { $sum: '$accruedInterest' } } },
+  ]);
+
+  const totalAccruedInterest = parseFloat((accruedInterestAgg[0]?.total || 0).toFixed(2));
+  const totalUpdated = parseFloat(((totalLent - totalReceived) + totalAccruedInterest).toFixed(2));
+
   // Debts por status
   const debtsByStatus = await Debt.aggregate([
     { $match: { userId: userObjId } },
@@ -109,6 +146,8 @@ export const getGlobalDashboardService = async (userId: string) => {
       totalReceived: parseFloat(totalReceived.toFixed(2)),
       totalInterest: parseFloat(totalInterest.toFixed(2)),
       totalPending: parseFloat((totalLent - totalReceived).toFixed(2)),
+      totalAccruedInterest,
+      totalUpdated,
       totalPeople: totalPeopleCount,
       totalDebts: totalDebtsCount,
     },

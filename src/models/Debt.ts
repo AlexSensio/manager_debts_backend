@@ -8,10 +8,12 @@ export interface IDebt extends Document {
   totalAmount: number;
   installmentsCount: number;
   interestRate: number; // taxa mensal em %
+  dailyInterestRate: number; // taxa diária em % cobrada por dia após vencimento da parcela
   installmentAmount: number; // valor calculado de cada parcela
   totalWithInterest: number; // total com juros
   status: DebtStatus;
   startDate: Date;
+  endDate?: Date; // data prevista de encerramento da dívida
   createdAt: Date;
   updatedAt: Date;
 }
@@ -53,6 +55,11 @@ const DebtSchema = new Schema<IDebt>(
       min: [0, 'Taxa não pode ser negativa'],
       default: 0,
     },
+    dailyInterestRate: {
+      type: Number,
+      min: [0, 'Taxa diária não pode ser negativa'],
+      default: 0,
+    },
     installmentAmount: {
       type: Number,
       required: true,
@@ -71,6 +78,9 @@ const DebtSchema = new Schema<IDebt>(
     startDate: {
       type: Date,
       default: Date.now,
+    },
+    endDate: {
+      type: Date,
     },
   },
   { timestamps: true }

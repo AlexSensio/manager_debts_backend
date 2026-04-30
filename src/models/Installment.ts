@@ -9,6 +9,8 @@ export interface IInstallment extends Document {
   amount: number;
   status: InstallmentStatus;
   paidAt?: Date;
+  lateFees?: number; // juros de atraso registrados ao quitar
+  lateDays?: number; // dias de atraso registrados ao quitar
   createdAt: Date;
   updatedAt: Date;
 }
@@ -48,6 +50,14 @@ const InstallmentSchema = new Schema<IInstallment>(
     },
     paidAt: {
       type: Date,
+    },
+    lateFees: {
+      type: Number,
+      default: 0,
+    },
+    lateDays: {
+      type: Number,
+      default: 0,
     },
   },
   { timestamps: true }
